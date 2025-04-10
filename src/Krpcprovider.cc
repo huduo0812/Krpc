@@ -3,6 +3,7 @@
 #include "Krpcheader.pb.h"
 #include "KrpcLogger.h"
 #include <iostream>
+#include <thread>
 
 // 注册服务对象及其方法，以便服务端能够处理客户端的RPC请求
 void KrpcProvider::NotifyService(google::protobuf::Service *service) {
@@ -79,7 +80,8 @@ void KrpcProvider::Run() {
 
     // RPC服务端准备启动，打印信息
     std::cout << "RpcProvider start service at ip:" << ip << " port:" << port << std::endl;
-
+    std::thread::id main_thread_id = std::this_thread::get_id();
+    std::cout << "Main thread ID: " << main_thread_id << std::endl;
     // 启动网络服务
     server->start();
     event_loop.loop();  // 进入事件循环
@@ -87,6 +89,12 @@ void KrpcProvider::Run() {
 
 // 连接回调函数，处理客户端连接事件
 void KrpcProvider::OnConnection(const muduo::net::TcpConnectionPtr &conn) {
+    // 获取当前工作线程的 ID
+    std::thread::id OnConnection_id = std::this_thread::get_id();
+
+    // 输出线程 ID (std::thread::id 支持流输出)
+    std::cout << "hand OnConnection thread ID: " << OnConnection_id << std::endl;
+
     if (!conn->connected()) {
         // 如果连接关闭，则断开连接
         conn->shutdown();
@@ -95,7 +103,13 @@ void KrpcProvider::OnConnection(const muduo::net::TcpConnectionPtr &conn) {
 
 // 消息回调函数，处理客户端发送的RPC请求
 void KrpcProvider::OnMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net::Buffer *buffer, muduo::Timestamp receive_time) {
-    std::cout << "OnMessage" << std::endl;
+    // std::cout << "OnMessage" << std::endl;
+
+    // 获取当前工作线程的 ID
+    std::thread::id OnMessage_id = std::this_thread::get_id();
+
+    // 输出线程 ID (std::thread::id 支持流输出)
+    std::cout << "hand OnMessage thread ID: " << OnMessage_id << std::endl;
 
     // 从网络缓冲区中读取远程RPC调用请求的字符流
     std::string recv_buf = buffer->retrieveAllAsString();
